@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ESNext", // 빌드 결과물 버전
+    "module": "ESNext", // 
+    "declarationDir": "./dist/next/",
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "moduleResolution": "node",
+  },
+  "include": [
+    "src/libs/**/*"
+  ],
+  "exclude": ["node_modules", "**/*.spec.ts"]
+}
