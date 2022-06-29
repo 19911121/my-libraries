@@ -1,0 +1,35 @@
+{
+  "ts-node": {
+    // It is faster to skip typechecking.
+    // Remove if you want ts-node to do typechecking.
+    "transpileOnly": true,
+
+    "files": true,
+
+    "compilerOptions": {
+      // compilerOptions specified here will override those declared below,
+      // but *only* in ts-node.  Useful if you want ts-node and tsc to use
+      // different options with a single tsconfig.json.
+    }
+  },
+  // "compilerOptions": {
+  //   "noImplicitAny": false,
+  //   "noEmitOnError": true,
+  //   "removeComments": false,
+  //   "sourceMap": true,
+  //   "target": "es6",
+  //   "outDir": "dist"
+  // },
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "ES6",
+    "outDir": "./dist/es6/",
+    "allowJs": true,
+    "noImplicitAny": true,
+    "moduleResolution": "node"
+  },
+  "include": [
+    "src/libs/**/*"
+  ],
+  "exclude": ["node_modules", "**/*.spec.ts"]
+}

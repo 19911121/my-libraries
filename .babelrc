@@ -1,0 +1,19 @@
+{
+  "presets": [
+    // ["@babel/preset-env", {
+    //   // // "shippedProposals": true,
+    //   // // "modules": false,
+    //   // "targets": {
+    //   //   "esmodules": true,
+    //   //   "node": "current"
+    //   // },
+    //   // "spec": true,
+    //   // "loose": true,
+    //   "include": [
+    //     "@babel/plugin-proposal-class-properties",
+    //     "@babel/plugin-proposal-private-methods"
+    //   ]
+    // }]
+    "@babel/preset-env"
+  ]
+}

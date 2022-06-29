@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ESNext", // 빌드 결과물 버전
+    "module": "ESNext", // 
+    "outDir": "./dist/next/js/",
+    "strict": true,
+    "declaration": true,
+    "declarationDir": "./dist/next/js/",
+    "allowJs": true,
+    "removeComments": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "lib": ["dom", "ESNext", "DOM.Iterable"]
+  },
+  "include": [
+    ".eslintrc.json",
+    "libs/**/*"
+  ],
+  "exclude": ["node_modules"]
+}
