@@ -8,20 +8,20 @@ type UpdateRowReturnType = {
 
 type ScrollCallBack = (e: Event) => void;
 
-interface Options<RT> {
-  rows?: Row<RT>[];
+interface Options<R> {
+  rows?: Row<R>[];
   bench: number;
   direction: 'vertical' | 'horizontal';
 }
 
-class FBVirtualScroll<RT> {
-  private options: Options<RT>;
-  private rows: Row<RT>[] = [];
+class FBVirtualScroll<R = unknown> {
+  private options: Options<R>;
+  private rows: Row<R>[] = [];
 
   /**
    * 렌더링 할 Rows
    */
-  private renderRows: Row<RT>[] = [];
+  private renderRows: Row<R>[] = [];
   private renderFirstRowIndex = 0;
   private renderLastRowIndex = 0;
 
@@ -75,7 +75,7 @@ class FBVirtualScroll<RT> {
   private callback: ScrollCallBack | null = null;
   // #endregion
 
-  constructor(container: HTMLElement, wrapper: HTMLElement, options?: Partial<Options<RT>>) {
+  constructor(container: HTMLElement, wrapper: HTMLElement, options?: Partial<Options<R>>) {
     this.refContainer = container;
     this.refWrapper = wrapper;
     this.options = {
@@ -242,7 +242,7 @@ class FBVirtualScroll<RT> {
   /**
    * rendering 할 rows
    */
-  public getRenderRows(): RT[] {
+  public getRenderRows(): R[] {
     return this.renderRows;
   }
 
@@ -332,9 +332,30 @@ class FBVirtualScroll<RT> {
   }
 
   /**
+   * 화면에 표시할 Rows 추가
+   * @param children
+   */
+  public addRenderRows(children: HTMLCollection, height: number): void {
+    this.wrapperHeight += height;
+    this.rowRects = this.rowRects.concat(Array.from(children).map((v) => {
+      const rect = v.getBoundingClientRect();
+
+      return {
+        ...rect,
+        
+        top: this.wrapperHeight += rect.top,
+        bottom: this.wrapperHeight += rect.bottom,
+      };
+    }));
+    this.execVerticalScroll(this.refContainer.scrollTop);
+
+    if (this.hasVerticalScroll()) this.wrapperHeight += this.getContainerPaddingVertical();
+  }
+
+  /**
    * rows 정보가 업데이트 될 시 호출
    */
-  public updateRows(rows: Row<RT>[]): UpdateRowReturnType {
+  public updateRows(rows: Row<R>[]): UpdateRowReturnType {
     this.rows = rows;
 
     return {
@@ -358,9 +379,9 @@ class FBVirtualScroll<RT> {
   }
 
   /**
-   * 스크롤 이벤트에 따른 가상스크롤 실행(세로)
+   * 가상스크롤 실행(세로)
    *
-   * @param scrollTop
+   * @param scrollTop 이동 할 top 좌표
    */
   private execVerticalScroll(scrollTop: number) {
     const firstRow = this.getFirstRow(scrollTop);
@@ -373,6 +394,19 @@ class FBVirtualScroll<RT> {
     this.renderLastRowIndex = lastBenchRow;
     this.renderRows = this.rows.slice(firstBenchRow, lastBenchRow);
     this.wrapperPaddingTop = scrollTop - beforeRowsHeight - this.getContainerPaddingBottom() / 2;
+  }
+
+  /**
+   * Row가 있는 위치로 스크롤 이동
+   *
+   * @param row 이동 할 row
+   */
+  public moveVerticalScrollToRow(row: number) {
+    const [refFirstCoordinate] = this.referenceCoordinates;
+    const rect = this.rowRects[row];
+    const scrollTop = rect[refFirstCoordinate] - this.containerRect[refFirstCoordinate] + this.calibrationScroll;
+
+    this.refContainer.scrollTo(this.refContainer.scrollLeft, scrollTop);
   }
 
   /**
