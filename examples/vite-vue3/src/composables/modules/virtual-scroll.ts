@@ -6,6 +6,12 @@ import VirtualScroll from '../../../../../libs/virtual-scroll';
 // #region Emits & Props
 type Emits = 'container-scroll' | 'updated';
 interface Props {
+  /**
+   * v-for key에 들어 갈 유니크 값
+   */
+  key: string;
+  direction: 'vertical' | 'horizontal';
+  
   containerTag: string;
   containerClass: string | Record<string, any>;
   containerStyle: Record<string, string>;
@@ -18,8 +24,6 @@ interface Props {
   
   bench: number;
   rows: any[];
-
-  direction: 'vertical' | 'horizontal';
 }
 
 const emits: Emits[] = ['container-scroll', 'updated'];
@@ -98,7 +102,7 @@ const props = {
 // #endregion
 
 export default function fbVirtualScrollComposable(emit: CustomEmit<Emits>, props: Props) {
-  const virtualScroll = ref<VirtualScroll<any> | null>(null);
+  let virtualScroll: VirtualScroll;
 
   /**
    * 렌더링 할 Rows
@@ -107,6 +111,38 @@ export default function fbVirtualScrollComposable(emit: CustomEmit<Emits>, props
   const refContainer = ref<HTMLElement>();
   const refWrapper = ref<HTMLElement>();
 
+  // #region 공통
+  /**
+   * 외부로 내본 낼 속성들
+   */
+  const getExposeProperties = () => {
+    return {
+      moveVerticalScrollToRow
+    };
+  };
+
+  /**
+   * 화면 업데이트
+   */
+  const updateView = () => {
+    renderRows.value = virtualScroll.getRenderRows();
+
+    updateWrapperStyle();
+    firstRenderRowIndex.value = virtualScroll.getRenderFirstRowIndex();
+  };
+
+  /**
+   * row에 해당하는 위치로 스크롤 이동
+   * 
+   * @param row 이동 할 row
+   */
+  const moveVerticalScrollToRow = (row: number) => {
+    if (!virtualScroll) return;
+
+    updateView();
+  };
+  // #endregion
+
   // #region container
   /**
    * 1. container 스크롤 이벤트 발생 시 호출
@@ -114,12 +150,9 @@ export default function fbVirtualScrollComposable(emit: CustomEmit<Emits>, props
    * @param e 
    */
   const handleContainerScroll = (e: Event) => {
-    if (!virtualScroll.value) return;
+    if (!virtualScroll) return;
 
-    renderRows.value = virtualScroll.value.getRenderRows();
-
-    updateWrapperStyle();
-    firstRenderRowIndex.value = virtualScroll.value.getRenderFirstRowIndex();
+    updateView();
     emit('container-scroll', e);
   };
   // #endregion
@@ -127,10 +160,10 @@ export default function fbVirtualScrollComposable(emit: CustomEmit<Emits>, props
   // #region wrapper
   const wrapperStyle = ref<Partial<CSSStyleDeclaration>>();
   const updateWrapperStyle = () => {
-    if (!virtualScroll.value) return { ...props.wrapperStyle };
+    if (!virtualScroll) return { ...props.wrapperStyle };
     
     wrapperStyle.value = {
-      ...virtualScroll.value.getWrapperStyle(),
+      ...virtualScroll.getWrapperStyle(),
       ...props.wrapperStyle,
     };
   };
@@ -150,24 +183,24 @@ export default function fbVirtualScrollComposable(emit: CustomEmit<Emits>, props
       await nextTick();
       
       if (!refContainer.value || !refWrapper.value) return;
-      if (virtualScroll.value) {
-        const vs = virtualScroll.value.updateRows(renderRows.value);
+      if (null !== virtualScroll) {
+        const vs = virtualScroll.updateRows(renderRows.value);
 
         vs.rendered();
       }
       else {
-        virtualScroll.value = new VirtualScroll(refContainer.value, refWrapper.value, {
+        virtualScroll = new VirtualScroll(refContainer.value, refWrapper.value, {
           bench: props.bench,
           rows: renderRows.value,
           direction: props.direction
         });
-        virtualScroll.value.addContainerScrollEvent(handleContainerScroll);
+        virtualScroll.addContainerScrollEvent(handleContainerScroll);
       }
 
       await nextTick();
 
       updateWrapperStyle();
-      renderRows.value = virtualScroll.value.getRenderRows();
+      renderRows.value = virtualScroll.getRenderRows();
       
       emit('updated');
     }, {
@@ -180,13 +213,15 @@ export default function fbVirtualScrollComposable(emit: CustomEmit<Emits>, props
   });
 
   return {
-    virtualScroll,
+    // #region 공통
+    getExposeProperties,
+    // #endregion
+
     refContainer,
     renderRows,
     refWrapper,
     wrapperStyle,
     firstRenderRowIndex,
-    handleContainerScroll,
   };
 }
 
